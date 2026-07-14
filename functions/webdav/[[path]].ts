@@ -47,11 +47,19 @@ export const onRequest: PagesFunction<{
   const request: Request = context.request;
   if (request.method === "OPTIONS") return handleRequestOptions();
 
-  const skipAuth =
-    env.WEBDAV_PUBLIC_READ === "1" &&
-    ["GET", "HEAD", "PROPFIND"].includes(request.method);
+const url = new URL(request.url);
+const filePath = decodeURIComponent(
+  url.pathname.replace(/^\/webdav\/?/, "")
+);
+
+const skipAuth =
+  env.WEBDAV_PUBLIC_READ === "1" &&
+  filePath.length > 0 &&
+  !filePath.endsWith("/") &&
+  ["GET", "HEAD"].includes(request.method);
 
   if (!skipAuth) {
+    
     if (!env.WEBDAV_USERNAME || !env.WEBDAV_PASSWORD)
       return new Response("WebDAV protocol is not enabled", { status: 403 });
 
